@@ -6,6 +6,8 @@ const {
     merge,
     takeLast,
     switchMap,
+    interval,
+    takeUntil,
 } = rxjs
 
 // fromEvent(document, "keydown")
@@ -23,7 +25,8 @@ let player1 = {
     prevX: null,
     y: 15 * CELL_SIZE,
     prevY: null,
-    radius: CELL_SIZE * 0.75,
+    radius: PLAYER_RADIUS,
+    points: 0,
     draw: function() {
         ctx.clearRect(
             this.prevX - this.radius,
@@ -32,8 +35,9 @@ let player1 = {
             this.radius * 2
         )
         drawBoard()
+        drawDots()
         ctx.beginPath();
-        ctx.arc(this.x, this.y, CELL_SIZE * 0.75, 0, 2 * Math.PI);
+        ctx.arc(this.x, this.y, PLAYER_RADIUS, 0, 2 * Math.PI);
         ctx.fillStyle = "yellow"
         ctx.fill()
         this.prevX = this.x
@@ -58,6 +62,7 @@ const ArrowUpEvent = fromEvent(document, "keydown")
                     player1.y -= MOVEMENT
                     player1.draw()
                 }
+                checkDotCollection(player1.x, player1.y)
             }, SPEED)
             allIntervals.push(intervalId)
         }),
@@ -73,6 +78,7 @@ const ArrowDownEvent = fromEvent(document, "keydown")
                     player1.y += MOVEMENT
                     player1.draw()
                 }
+                checkDotCollection(player1.x, player1.y)
             }, SPEED)
             allIntervals.push(intervalId)
         }),
@@ -88,6 +94,7 @@ const ArrowLeftEvent = fromEvent(document, "keydown")
                     player1.x -= MOVEMENT
                     player1.draw()
                 }
+                checkDotCollection(player1.x, player1.y)
             }, SPEED)
             allIntervals.push(intervalId)
         }),
@@ -103,6 +110,7 @@ const ArrowRightEvent = fromEvent(document, "keydown")
                     player1.x += MOVEMENT
                     player1.draw()
                 }
+                checkDotCollection(player1.x, player1.y)
             }, SPEED)
             allIntervals.push(intervalId)
         }),
@@ -117,3 +125,9 @@ const MovementEvent = merge(ArrowUpEvent, ArrowDownEvent, ArrowLeftEvent, ArrowR
         }),
     )
     .subscribe()
+
+
+// const source = interval(1000);
+// const clicks = fromEvent(document, 'click');
+// const result = source.pipe(takeUntil(clicks));
+// result.subscribe(x => console.log(x));
