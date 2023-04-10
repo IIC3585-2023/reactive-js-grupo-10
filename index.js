@@ -5,14 +5,19 @@ const {
     filter,
     merge,
     interval,
-    concatMap,
+    of,
+    mergeMap,
 } = rxjs
 
 const MOVEMENT = CELL_SIZE/2
-const SPEED = 75
+const INTERVAL_LENGTH = 75
+
+// Creamos sesión del juego
 const GAME = {
     players: [],
     ghosts: [],
+    playersInterval: interval(INTERVAL_LENGTH),
+    ghostsInterval: interval(INTERVAL_LENGTH/2),
     draw: function() {
         drawBoard()
         drawDots()
@@ -21,117 +26,238 @@ const GAME = {
     }
 }
 
+// Función para inicializar al jugador
 function createPlayer(name, color, startPosX, startPosY) {
     let player = {
         name: name,
         x: startPosX * CELL_SIZE,
-        prevX: null,
         y: startPosY * CELL_SIZE,
-        prevY: null,
         points: 0,
-        draw: function() {
+        intervals: [],
+        draw: function() { // Función para dibujar al jugador
             ctx.beginPath();
-            ctx.arc(this.x, this.y, PLAYER_RADIUS, 0, 2 * Math.PI);
+            ctx.arc(this.x, this.y, PLAYER_RADIUS, 0, 2 * Math.PI); // Círculo con centro en x,y
             ctx.fillStyle = color
             ctx.fill()
-            this.prevX = this.x
-            this.prevY = this.y
         }
     }
     return player
 }
 
+// Función para agregar al jugador a la sesión del juego (con las teclas de movimiento)
 function addPlayerToGame(player, upKey, downKey, leftKey, rightKey) {
-    GAME.players.push(player)
-    GAME.draw()
+    GAME.players.push(player) // Agregamos al listado de jugadroes
+    GAME.draw() // Dibujamos el tablero, los puntos y los jugadores
+    
+    // let allIntervals = []
 
-    let allIntervals = []
+    function DirectionObservable(dirKey, nextPosX, nextPosY) {
+        return fromEvent(document, "keydown")
+            .pipe(
+                filter(event => event.code == dirKey),
+                filter(_ => checkNoCollision(player.x + nextPosX, player.y + nextPosY)),
+                tap(_ => {
+                    const intervalObservable = GAME.playersInterval
+                        .pipe(
+                            tap(_ => {
+                                if (checkNoCollision(player.x + nextPosX, player.y + nextPosY)) {
+                                    player.x += nextPosX
+                                    player.y += nextPosY
+                                    GAME.draw()
+                                }
+                                checkDotCollection(player.x, player.y)
+                            })
+                        ).subscribe()
+                    player.intervals.push(intervalObservable)
+                })
+            )
+    }
 
-    const UpEvent = fromEvent(document, "keydown")
+    const UpObservable = DirectionObservable(upKey, 0, -MOVEMENT)
+    const DownObservable = DirectionObservable(downKey, 0, MOVEMENT)
+    const LeftObservable = DirectionObservable(leftKey, -MOVEMENT, 0)
+    const RightObservable = DirectionObservable(rightKey, MOVEMENT, 0)
+
+    const MovementObservable = merge(UpObservable, DownObservable, LeftObservable, RightObservable)
         .pipe(
-            filter(event => event.code == upKey),
-            filter(_ => checkNoCollision(player.x, player.y - MOVEMENT)),
             tap(_ => {
-                const intervalId = setInterval(() => {
-                    if (checkNoCollision(player.x, player.y - MOVEMENT)) {
-                        player.y -= MOVEMENT
-                        GAME.draw()
-                    }
-                    checkDotCollection(player.x, player.y)
-                }, SPEED)
-                allIntervals.push(intervalId)
+                // Detenemos todos los intervalos activas excepto el último (jugador solo se moverá en la última dirección presionada, si es válida)
+                const lastId = player.intervals.pop()
+                player.intervals.forEach((intervalObservable) => intervalObservable.unsubscribe())
+                // allIntervals.forEach((intervalId) => clearInterval(intervalId))
+                player.intervals = [lastId]
             }),
         )
+        .subscribe() // Asociamos jugador (Observer) al Observable
+    
+    // Observable para determinar si el jugador colisiona con un fantasma
+    GAME.playersInterval
+        .pipe(
+            // Verificamos si el jugador se intersecta con cualquier fantasma
+            filter(_ => GAME.ghosts.some(
+                ghost => checkCollisionPlayerGhosts(player.x, player.y, ghost.x, ghost.y)
+            )),
+            // Si es así, eliminamos al jugador de la sesión y lo desuscribimos del Observable de movimiento
+            map(_ => {
+                GAME.players = GAME.players.filter(p => p.name !== player.name)
+                player.intervals.forEach((intervalObservable) => intervalObservable.unsubscribe())
+                MovementObservable.unsubscribe()
+            })
+        )
+        .subscribe()
 
+    /*
+
+    // Observable para la dirección hacia arriba
+    const UpEvent = fromEvent(document, "keydown") // "Escucha" cuando se presiona una tecla
+        .pipe(
+            filter(event => event.code == upKey), // Filtramos para que la tecla corresponda a la dirección del Observable
+            filter(_ => checkNoCollision(player.x, player.y - MOVEMENT)), // Verificamos que en el primer movimiento (justo al presionar la tecla) el jugador no colisione con una pared
+            tap(_ => {
+                const intervalObservable = GAME.playersInterval
+                    .pipe(
+                        tap(_ => {
+                            if (checkNoCollision(player.x, player.y - MOVEMENT)) { // Jugador se mueve solamente si no colisonará con una pared
+                                player.y -= MOVEMENT
+                                GAME.draw()
+                            }
+                            checkDotCollection(player.x, player.y) // Recolectamos los puntos que tocamos al movernos
+                        })
+                    ).subscribe()
+                allIntervals.push(intervalObservable)
+            }),
+            // tap(_ => {
+            //     const intervalId = setInterval(() => { // Loop infinito para que el jugador se mueva en la misma dirección automáticamente (solo basta presionar la tecla una vez)
+            //         if (checkNoCollision(player.x, player.y - MOVEMENT)) { // Jugador se mueve solamente si no colisonará con una pared
+            //             player.y -= MOVEMENT
+            //             GAME.draw()
+            //         }
+            //         checkDotCollection(player.x, player.y) // Recolectamos los puntos que tocamos al movernos
+            //     }, INTERVAL_LENGTH)
+            //     allIntervals.push(intervalId) // Guardamos el id del loop infinito
+            // }),
+        )
+    
+    // Observable para la dirección hacia abajo
     const DownEvent = fromEvent(document, "keydown")
         .pipe(
             filter(event => event.code == downKey),
             filter(_ => checkNoCollision(player.x, player.y + MOVEMENT)),
             tap(_ => {
-                const intervalId = setInterval(() => {
-                    if (checkNoCollision(player.x, player.y + MOVEMENT)) {
-                        player.y += MOVEMENT
-                        GAME.draw()
-                    }
-                    checkDotCollection(player.x, player.y)
-                }, SPEED)
-                allIntervals.push(intervalId)
+                const intervalObservable = GAME.playersInterval
+                    .pipe(
+                        tap(_ => {
+                            if (checkNoCollision(player.x, player.y + MOVEMENT)) {
+                                player.y += MOVEMENT
+                                GAME.draw()
+                            }
+                            checkDotCollection(player.x, player.y)
+                        })
+                    ).subscribe()
+                allIntervals.push(intervalObservable)
             }),
+            // tap(_ => {
+            //     const intervalId = setInterval(() => {
+            //         if (checkNoCollision(player.x, player.y + MOVEMENT)) {
+            //             player.y += MOVEMENT
+            //             GAME.draw()
+            //         }
+            //         checkDotCollection(player.x, player.y)
+            //     }, INTERVAL_LENGTH)
+            //     allIntervals.push(intervalId)
+            // }),
         )
-
+    
+    // Observable para la dirección hacia la izquierda
     const LeftEvent = fromEvent(document, "keydown")
         .pipe(
             filter(event => event.code == leftKey),
             filter(_ => checkNoCollision(player.x - MOVEMENT, player.y)),
             tap(_ => {
-                const intervalId = setInterval(() => {
-                    if (checkNoCollision(player.x - MOVEMENT, player.y)) {
-                        player.x -= MOVEMENT
-                        GAME.draw()
-                    }
-                    checkDotCollection(player.x, player.y)
-                }, SPEED)
-                allIntervals.push(intervalId)
+                const intervalObservable = GAME.playersInterval
+                    .pipe(
+                        tap(_ => {
+                            if (checkNoCollision(player.x - MOVEMENT, player.y)) {
+                                player.x -= MOVEMENT
+                                GAME.draw()
+                            }
+                            checkDotCollection(player.x, player.y)
+                        })
+                    ).subscribe()
+                allIntervals.push(intervalObservable)
             }),
+            // tap(_ => {
+            //     const intervalId = setInterval(() => {
+            //         if (checkNoCollision(player.x - MOVEMENT, player.y)) {
+            //             player.x -= MOVEMENT
+            //             GAME.draw()
+            //         }
+            //         checkDotCollection(player.x, player.y)
+            //     }, INTERVAL_LENGTH)
+            //     allIntervals.push(intervalId)
+            // }),
         )
 
+    // Observable para la dirección hacia la derecha
     const RightEvent = fromEvent(document, "keydown")
         .pipe(
             filter(event => event.code == rightKey),
             filter(_ => checkNoCollision(player.x + MOVEMENT, player.y)),
             tap(_ => {
-                const intervalId = setInterval(() => {
-                    if (checkNoCollision(player.x + MOVEMENT, player.y)) {
-                        player.x += MOVEMENT
-                        GAME.draw()
-                    }
-                    checkDotCollection(player.x, player.y)
-                }, SPEED)
-                allIntervals.push(intervalId)
+                const intervalObservable = GAME.playersInterval
+                    .pipe(
+                        tap(_ => {
+                            if (checkNoCollision(player.x + MOVEMENT, player.y)) {
+                                player.x += MOVEMENT
+                                GAME.draw()
+                            }
+                            checkDotCollection(player.x, player.y)
+                        })
+                    ).subscribe()
+                allIntervals.push(intervalObservable)
             }),
+            // tap(_ => {
+            //     const intervalId = setInterval(() => {
+            //         if (checkNoCollision(player.x + MOVEMENT, player.y)) {
+            //             player.x += MOVEMENT
+            //             GAME.draw()
+            //         }
+            //         checkDotCollection(player.x, player.y)
+            //     }, INTERVAL_LENGTH)
+            //     allIntervals.push(intervalId)
+            // }),
         )
-
+    
+    // Unimos los 4 observables en uno (así, va a estar escuchando que se presione cualquiera de las 4 teclas)
     const MovementEvent = merge(UpEvent, DownEvent, LeftEvent, RightEvent)
         .pipe(
             tap(_ => {
+                // Detenemos todos los intervalos activas excepto el último (jugador solo se moverá en la última dirección presionada, si es válida)
                 const lastId = allIntervals.pop()
-                allIntervals.forEach((intervalId) => clearInterval(intervalId))
+                allIntervals.forEach((intervalObservable) => intervalObservable.unsubscribe())
+                // allIntervals.forEach((intervalId) => clearInterval(intervalId))
                 allIntervals = [lastId]
             }),
         )
-        .subscribe()
+        .subscribe() // Asociamos jugador (Observer) al Observable
 
-    interval(SPEED)
-        .pipe(
-            filter(_ => GAME.ghosts.some(
-                ghost => checkCollisionPlayerGhosts(player.x, player.y, ghost.x, ghost.y)
-            )),
-            map(_ => {
-                GAME.players = GAME.players.filter(p => p.name !== player.name)
-                MovementEvent.unsubscribe()
-            })
-        )
-        .subscribe()
+    */
+    
+    // // Observable para determinar si el jugador colisiona con un fantasma
+    // GAME.playersInterval
+    //     .pipe(
+    //         // Verificamos si el jugador se intersecta con cualquier fantasma
+    //         filter(_ => GAME.ghosts.some(
+    //             ghost => checkCollisionPlayerGhosts(player.x, player.y, ghost.x, ghost.y)
+    //         )),
+    //         // Si es así, eliminamos al jugador de la sesión y lo desuscribimos del Observable de movimiento
+    //         map(_ => {
+    //             GAME.players = GAME.players.filter(p => p.name !== player.name)
+    //             allIntervals.forEach((intervalId) => clearInterval(intervalId))
+    //             MovementEvent.unsubscribe()
+    //         })
+    //     )
+    //     .subscribe()
 }
 
 let player1 = createPlayer("Jugador 1", "yellow", 25, 15)
@@ -140,12 +266,11 @@ addPlayerToGame(player1, "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight")
 let player2 = createPlayer("Jugador 2", "green", 28, 15)
 addPlayerToGame(player2, "KeyW", "KeyS", "KeyA", "KeyD")
 
+// Función para inicializar un fantasma enemigo
 function createGhost(color, startPosX, startPosY, initialDirection) {
     let ghost = {
         x: startPosX * CELL_SIZE,
-        prevX: null,
         y: startPosY * CELL_SIZE,
-        prevY: null,
         direction: initialDirection,
         draw: function() {
             ctx.beginPath()
@@ -159,8 +284,6 @@ function createGhost(color, startPosX, startPosY, initialDirection) {
             ctx.lineTo(this.x - GHOST_RADIUS, this.y + GHOST_RADIUS);
             ctx.fillStyle = color
             ctx.fill()
-            this.prevX = this.x
-            this.prevY = this.y
         }
     }
     return ghost
@@ -168,18 +291,22 @@ function createGhost(color, startPosX, startPosY, initialDirection) {
 
 const directions = ['U', 'D', 'L', 'R']
 
+// Función para agregar fantasma a la sesión del juego
 function addGhostToGame(ghost) {
     GAME.ghosts.push(ghost)
     GAME.draw()
 
-    interval(SPEED/2)
+    // Observable con loop infinito (dado por el tiempo entre cada movimiento/frame)
+    GAME.ghostsInterval
         .pipe(
+            // Si fantasma se encuentra en un cruce/intersección de caminos, cambiamos de dirección al azar
             map(_ => {
                 if (checkIntersection(ghost.x, ghost.y)) {
                     return directions[Math.floor(Math.random() * directions.length)]
                 }
                 return ghost.direction
             }),
+            // Verificamos si el fantasma va a chocar con alguna pared en su siguiente movimiento
             map(dir => {
                 let noCollision = false
                 if (dir == 'U') {
@@ -196,7 +323,9 @@ function addGhostToGame(ghost) {
                 }
                 return noCollision
             }),
+            // Nos quedamos solamente con los futuros movimientos que no generarán una colisión
             filter(x => x),
+            // Actualizamos la posición del fantasma
             map(_ => {
                 if (ghost.direction == 'U') {
                     ghost.y -= MOVEMENT
