@@ -149,14 +149,14 @@ function createGhost(color, startPosX, startPosY, initialDirection) {
         direction: initialDirection,
         draw: function() {
             ctx.beginPath()
-            ctx.arc(this.x, this.y, PLAYER_RADIUS, Math.PI, 0)        
-            ctx.lineTo(this.x + PLAYER_RADIUS, this.y + PLAYER_RADIUS);
-            ctx.lineTo(this.x + PLAYER_RADIUS*0.5, this.y + PLAYER_RADIUS/2);
-            ctx.lineTo(this.x + PLAYER_RADIUS*0.35, this.y + PLAYER_RADIUS);
-            ctx.lineTo(this.x, this.y + PLAYER_RADIUS/2);
-            ctx.lineTo(this.x - PLAYER_RADIUS*0.35, this.y + PLAYER_RADIUS);
-            ctx.lineTo(this.x - PLAYER_RADIUS*0.5, this.y + PLAYER_RADIUS/2);
-            ctx.lineTo(this.x - PLAYER_RADIUS, this.y + PLAYER_RADIUS);
+            ctx.arc(this.x, this.y, GHOST_RADIUS, Math.PI, 0)        
+            ctx.lineTo(this.x + GHOST_RADIUS, this.y + GHOST_RADIUS);
+            ctx.lineTo(this.x + GHOST_RADIUS*0.5, this.y + GHOST_RADIUS/2);
+            ctx.lineTo(this.x + GHOST_RADIUS*0.35, this.y + GHOST_RADIUS);
+            ctx.lineTo(this.x, this.y + GHOST_RADIUS/2);
+            ctx.lineTo(this.x - GHOST_RADIUS*0.35, this.y + GHOST_RADIUS);
+            ctx.lineTo(this.x - GHOST_RADIUS*0.5, this.y + GHOST_RADIUS/2);
+            ctx.lineTo(this.x - GHOST_RADIUS, this.y + GHOST_RADIUS);
             ctx.fillStyle = color
             ctx.fill()
             this.prevX = this.x

@@ -38,6 +38,7 @@ let grid = [
 const CELL_SIZE = 20
 const DOT_RADIUS = CELL_SIZE * 0.1
 const PLAYER_RADIUS = CELL_SIZE * 0.75
+const GHOST_RADIUS = PLAYER_RADIUS
 
 board.width = CELL_SIZE * grid[0].length
 board.height = CELL_SIZE * grid.length
@@ -170,5 +171,5 @@ function checkIntersection(x, y) {
 }
 
 function checkCollisionPlayerGhosts(playerX, playerY, ghostX, ghostY) {
-    return Math.hypot(ghostX-playerX, ghostY-playerY) <= PLAYER_RADIUS + PLAYER_RADIUS
+    return Math.hypot(ghostX-playerX, ghostY-playerY) <= GHOST_RADIUS/2 + PLAYER_RADIUS/2
 }
