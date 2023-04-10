@@ -49,11 +49,11 @@ let walls = []
 function drawBoard() {
     for(let row = 0; row < grid.length; row++) {
         for(let col = 0; col < grid[0].length; col++) {
-            if ([" ", "X", "O"].includes(grid[row][col])) {
+            if (grid[row][col] == " ") {
                 ctx.fillStyle = "#000000"
             } else {
                 walls.push([col, row])
-                ctx.fillStyle = "#0000A6" //#000080 #0000CD
+                ctx.fillStyle = "#0000A6"
             }
             ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         }
@@ -62,6 +62,7 @@ function drawBoard() {
 
 let dots = []
 
+// los caminos son de dos bloques, ponemos el dot en medio de 4 bloques
 for(let row = 1; row < grid.length; row++) {
     for(let col = 1; col < grid[0].length; col++) {
 
@@ -73,6 +74,33 @@ for(let row = 1; row < grid.length; row++) {
         if (cellUpLeft && cellLeft && cellRight && currCell) {
             dots.push([col, row])
         }
+    }
+}
+
+let intersections = []
+
+// interseccon de caminos, logica fantasmas
+for(let i = 0; i < dots.length; i++){
+    let dot = dots[i]
+    let dotCol = dot[0]
+    let dotRow = dot[1]
+
+    let isDotUp = dots.some(d => (d[0] == dotCol) && (d[1] == dotRow-1))
+    let isDotDown = dots.some(d => (d[0] == dotCol) && (d[1] == dotRow+1))
+    let isDotLeft = dots.some(d => (d[0] == dotCol-1) && (d[1] == dotRow))
+    let isDotRight = dots.some(d => (d[0] == dotCol+1) && (d[1] == dotRow))
+
+    let andUL = isDotUp && isDotLeft
+    let andUR = isDotUp && isDotRight
+    let andLD = isDotLeft && isDotDown
+    let andRD = isDotRight && isDotDown
+
+    if (andUL || andUR || andLD || andRD){
+        intersections.push([dotCol, dotRow])
+    }
+    // Caminos sin salida
+    if ((isDotUp + isDotDown + isDotLeft + isDotRight) == 1) {
+        intersections.push([dotCol, dotRow])
     }
 }
 
@@ -89,6 +117,7 @@ function drawDots() {
     }
 }
 
+// pacman vs muralla
 // Basado en https://stackoverflow.com/a/16012490
 function rectanglesIntersect(minAx, minAy, minBx, minBy) {
     let maxAx = minAx+1
@@ -103,7 +132,7 @@ function rectanglesIntersect(minAx, minAy, minBx, minBy) {
     return !( aLeftOfB || aRightOfB || aAboveB || aBelowB );
 }
 
-function checkCollision(x, y) {
+function checkNoCollision(x, y) {
     let playerCol = (x / CELL_SIZE) - 1
     let playerRow = (y / CELL_SIZE) - 1
     for(let i = 0; i < walls.length; i++){
@@ -132,4 +161,10 @@ function checkDotCollection(x, y) {
             drawDots()
         }
     }
+}
+
+function checkIntersection(x, y) {
+    let ghostCol = x / CELL_SIZE
+    let ghostRow = y / CELL_SIZE
+    return intersections.some(i => (i[0] == ghostCol) && (i[1] == ghostRow))
 }
