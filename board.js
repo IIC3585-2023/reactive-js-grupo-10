@@ -120,10 +120,10 @@ function drawDots() {
 // pacman vs muralla
 // Basado en https://stackoverflow.com/a/16012490
 function rectanglesIntersect(minAx, minAy, minBx, minBy) {
-    let maxAx = minAx+1
-    let maxAy = minAy+1
-    let maxBx = minBx+2
-    let maxBy = minBy+2
+    let maxAx = minAx + 1 // Pared (cantidad de celdas = 1)
+    let maxAy = minAy + 1 // Pared
+    let maxBx = minBx + 2 // Jugador (cantidad de celdas = 2)
+    let maxBy = minBy + 2 // Jugador
     let aLeftOfB = maxAx <= minBx;
     let aRightOfB = minAx >= maxBx;
     let aAboveB = minAy >= maxBy;
@@ -167,4 +167,8 @@ function checkIntersection(x, y) {
     let ghostCol = x / CELL_SIZE
     let ghostRow = y / CELL_SIZE
     return intersections.some(i => (i[0] == ghostCol) && (i[1] == ghostRow))
+}
+
+function checkCollisionPlayerGhosts(playerX, playerY, ghostX, ghostY) {
+    return Math.hypot(ghostX-playerX, ghostY-playerY) <= PLAYER_RADIUS + PLAYER_RADIUS
 }

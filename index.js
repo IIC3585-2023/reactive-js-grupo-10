@@ -14,8 +14,6 @@ const GAME = {
     players: [],
     ghosts: [],
     draw: function() {
-        // this.players.forEach((player => player.clearPrevDraw()))
-        // this.ghosts.forEach((ghost => ghost.clearPrevDraw()))
         drawBoard()
         drawDots()
         this.players.forEach((player) => player.draw())
@@ -23,21 +21,14 @@ const GAME = {
     }
 }
 
-function createPlayer(color, startPosX, startPosY) {
+function createPlayer(name, color, startPosX, startPosY) {
     let player = {
+        name: name,
         x: startPosX * CELL_SIZE,
         prevX: null,
         y: startPosY * CELL_SIZE,
         prevY: null,
         points: 0,
-        // clearPrevDraw: function() {
-        //     ctx.clearRect(
-        //         this.prevX - CELL_SIZE,
-        //         this.prevY - CELL_SIZE,
-        //         CELL_SIZE * 2,
-        //         CELL_SIZE * 2
-        //     )
-        // },
         draw: function() {
             ctx.beginPath();
             ctx.arc(this.x, this.y, PLAYER_RADIUS, 0, 2 * Math.PI);
@@ -129,12 +120,24 @@ function addPlayerToGame(player, upKey, downKey, leftKey, rightKey) {
             }),
         )
         .subscribe()
+
+    interval(SPEED)
+        .pipe(
+            filter(_ => GAME.ghosts.some(
+                ghost => checkCollisionPlayerGhosts(player.x, player.y, ghost.x, ghost.y)
+            )),
+            map(_ => {
+                GAME.players = GAME.players.filter(p => p.name !== player.name)
+                MovementEvent.unsubscribe()
+            })
+        )
+        .subscribe()
 }
 
-let player1 = createPlayer("yellow", 25, 15)
+let player1 = createPlayer("Jugador 1", "yellow", 25, 15)
 addPlayerToGame(player1, "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight")
 
-let player2 = createPlayer("green", 28, 15)
+let player2 = createPlayer("Jugador 2", "green", 28, 15)
 addPlayerToGame(player2, "KeyW", "KeyS", "KeyA", "KeyD")
 
 function createGhost(color, startPosX, startPosY, initialDirection) {
@@ -144,14 +147,6 @@ function createGhost(color, startPosX, startPosY, initialDirection) {
         y: startPosY * CELL_SIZE,
         prevY: null,
         direction: initialDirection,
-        // clearPrevDraw: function() {
-        //     ctx.clearRect(
-        //         this.prevX - CELL_SIZE,
-        //         this.prevY - CELL_SIZE,
-        //         CELL_SIZE * 2,
-        //         CELL_SIZE * 2
-        //     )
-        // },
         draw: function() {
             ctx.beginPath()
             ctx.arc(this.x, this.y, PLAYER_RADIUS, Math.PI, 0)        
@@ -181,7 +176,6 @@ function addGhostToGame(ghost) {
         .pipe(
             map(_ => {
                 if (checkIntersection(ghost.x, ghost.y)) {
-                    directions[Math.floor(Math.random() * directions.length)]
                     return directions[Math.floor(Math.random() * directions.length)]
                 }
                 return ghost.direction
@@ -229,108 +223,11 @@ addGhostToGame(ghost2)
 addGhostToGame(ghost3)
 addGhostToGame(ghost4)
 
-
-//////////////////////////// VERSION ANTERIOR (1 SOLO JUGADOR) ////////////////////////////////
-
-// let player1 = {
-//     x: 25 * CELL_SIZE,
-//     prevX: null,
-//     y: 15 * CELL_SIZE,
-//     prevY: null,
-//     radius: PLAYER_RADIUS,
-//     points: 0,
-//     draw: function() {
-//         ctx.clearRect(
-//             this.prevX - this.radius,
-//             this.prevY - this.radius,
-//             this.radius * 2,
-//             this.radius * 2
-//         )
-//         drawBoard()
-//         drawDots()
-//         ctx.beginPath();
-//         ctx.arc(this.x, this.y, PLAYER_RADIUS, 0, 2 * Math.PI);
-//         ctx.fillStyle = "yellow"
-//         ctx.fill()
-//         this.prevX = this.x
-//         this.prevY = this.y
-//     }
-// }
-
-// player1.draw()
-
-// let allIntervals = []
-
-// const ArrowUpEvent = fromEvent(document, "keydown")
-//     .pipe(
-//         filter(event => event.code == "ArrowUp"),
-//         filter(_ => checkCollision(player1.x, player1.y - MOVEMENT)),
-//         tap(_ => {
-//             const intervalId = setInterval(() => {
-//                 if (checkCollision(player1.x, player1.y - MOVEMENT)) {
-//                     player1.y -= MOVEMENT
-//                     player1.draw()
-//                 }
-//                 checkDotCollection(player1.x, player1.y)
-//             }, SPEED)
-//             allIntervals.push(intervalId)
-//         }),
-//     )
-
-// const ArrowDownEvent = fromEvent(document, "keydown")
-//     .pipe(
-//         filter(event => event.code == "ArrowDown"),
-//         filter(_ => checkCollision(player1.x, player1.y + MOVEMENT)),
-//         tap(_ => {
-//             const intervalId = setInterval(() => {
-//                 if (checkCollision(player1.x, player1.y + MOVEMENT)) {
-//                     player1.y += MOVEMENT
-//                     player1.draw()
-//                 }
-//                 checkDotCollection(player1.x, player1.y)
-//             }, SPEED)
-//             allIntervals.push(intervalId)
-//         }),
-//     )
-
-// const ArrowLeftEvent = fromEvent(document, "keydown")
-//     .pipe(
-//         filter(event => event.code == "ArrowLeft"),
-//         filter(_ => checkCollision(player1.x - MOVEMENT, player1.y)),
-//         tap(_ => {
-//             const intervalId = setInterval(() => {
-//                 if (checkCollision(player1.x - MOVEMENT, player1.y)) {
-//                     player1.x -= MOVEMENT
-//                     player1.draw()
-//                 }
-//                 checkDotCollection(player1.x, player1.y)
-//             }, SPEED)
-//             allIntervals.push(intervalId)
-//         }),
-//     )
-
-// const ArrowRightEvent = fromEvent(document, "keydown")
-//     .pipe(
-//         filter(event => event.code == "ArrowRight"),
-//         filter(_ => checkCollision(player1.x + MOVEMENT, player1.y)),
-//         tap(_ => {
-//             const intervalId = setInterval(() => {
-//                 if (checkCollision(player1.x + MOVEMENT, player1.y)) {
-//                     player1.x += MOVEMENT
-//                     player1.draw()
-//                 }
-//                 checkDotCollection(player1.x, player1.y)
-//             }, SPEED)
-//             allIntervals.push(intervalId)
-//         }),
-//     )
-
-// const Player1MovementEvent = merge(ArrowUpEvent, ArrowDownEvent, ArrowLeftEvent, ArrowRightEvent)
-//     .pipe(
-//         tap(_ => {
-//             const lastId = allIntervals.pop()
-//             allIntervals.forEach((intervalId) => clearInterval(intervalId))
-//             allIntervals = [lastId]
-//         }),
-//     )
-//     .subscribe()
+// let ghost5 = createGhost("purple", 13, 2, 'L')
+// addGhostToGame(ghost5)
+// let ghost6 = createGhost("brown", 40, 2, 'R')
+// addGhostToGame(ghost6)
+// let ghost7 = createGhost("grey", 17, 2, 'R')
+// addGhostToGame(ghost7)
+// let ghost8 = createGhost("darkgreen", 37, 2, 'L')
+// addGhostToGame(ghost8)
