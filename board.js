@@ -80,9 +80,8 @@ for(let row = 1; row < grid.length; row++) {
 
 let intersections = []
 
-// interseccon de caminos, logica fantasmas
-for(let i = 0; i < dots.length; i++){
-    let dot = dots[i]
+// interseccion de caminos, logica fantasmas
+dots.forEach(dot => {
     let dotCol = dot[0]
     let dotRow = dot[1]
 
@@ -103,7 +102,7 @@ for(let i = 0; i < dots.length; i++){
     if ((isDotUp + isDotDown + isDotLeft + isDotRight) == 1) {
         intersections.push([dotCol, dotRow])
     }
-}
+})
 
 function drawDots() {
     // ctx.fillStyle = '#00a308' //#964b4b
@@ -136,15 +135,20 @@ function rectanglesIntersect(minAx, minAy, minBx, minBy) {
 function checkNoCollision(x, y) {
     let playerCol = (x / CELL_SIZE) - 1
     let playerRow = (y / CELL_SIZE) - 1
-    for(let i = 0; i < walls.length; i++){
-        let wall = walls[i]
+    return !walls.find(wall => {
         let wallCol = wall[0]
         let wallRow = wall[1]
-        if (rectanglesIntersect(wallCol, wallRow, playerCol, playerRow)){
-            return false
-        }
-    }
-    return true
+        return rectanglesIntersect(wallCol, wallRow, playerCol, playerRow)
+    })
+    // for(let i = 0; i < walls.length; i++){
+    //     let wall = walls[i]
+    //     let wallCol = wall[0]
+    //     let wallRow = wall[1]
+    //     if (rectanglesIntersect(wallCol, wallRow, playerCol, playerRow)){
+    //         return false
+    //     }
+    // }
+    // return true
 }
 
 // Basado en https://stackoverflow.com/a/68841877
@@ -153,15 +157,14 @@ function circlesIntersect(dotX, dotY, playerX, playerY) {
 }
 
 function checkDotCollection(x, y) {
-    for(let i = 0; i < dots.length; i++){
-        let dot = dots[i]
+    dots.forEach(dot => {
         let dotX = dot[0] * CELL_SIZE
         let dotY = dot[1] * CELL_SIZE
         if (circlesIntersect(dotX, dotY, x, y)){
             dots = dots.filter(item => item !== dot)
             drawDots()
         }
-    }
+    })
 }
 
 function checkIntersection(x, y) {
