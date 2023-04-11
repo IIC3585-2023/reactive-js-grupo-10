@@ -187,12 +187,16 @@ function checkNoCollision(x, y) {
     const playerRowFloor = Math.floor(playerRow)
     const playerColCeil = Math.ceil(playerCol)
     const playerRowCeil = Math.ceil(playerRow)
+    let corners = false
+    if (playerColFloor !== playerColCeil && playerRowFloor !== playerRowCeil) {
+        corners = GAME.grid[playerRowFloor+2][playerColFloor] == "■" || GAME.grid[playerRowFloor][playerColFloor+2] == "■"
+    }
     // Math.floor()
     // Math.ceil()
     return !(GAME.grid[playerRowFloor][playerColFloor] == "■" || GAME.grid[playerRowFloor][playerColFloor + 1] == "■" || 
         GAME.grid[playerRowFloor + 1][playerColFloor] == "■" || GAME.grid[playerRowFloor + 1][playerColFloor + 1] == "■" ||
         GAME.grid[playerRowCeil][playerColCeil] == "■" || GAME.grid[playerRowCeil][playerColCeil + 1] == "■" || 
-        GAME.grid[playerRowCeil + 1][playerColCeil] == "■" || GAME.grid[playerRowCeil + 1][playerColCeil + 1] == "■"
+        GAME.grid[playerRowCeil + 1][playerColCeil] == "■" || GAME.grid[playerRowCeil + 1][playerColCeil + 1] == "■" || corners
     )
     
     // return !GAME.walls.find(wall => {
