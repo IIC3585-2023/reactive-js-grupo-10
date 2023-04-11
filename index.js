@@ -14,12 +14,24 @@ function createPlayer(name, color, startPosX, startPosY) {
         name: name,
         x: startPosX * CELL_SIZE,
         y: startPosY * CELL_SIZE,
+        keys: [],
         currDir: null,
         activeSubscriptions: [],
         ghostSubscription: null,
         draw: function() { // Función para dibujar al jugador
             ctx.beginPath();
-            ctx.arc(this.x, this.y, PLAYER_RADIUS, 0, 2 * Math.PI); // Círculo con centro en x,y
+            if (this.currDir == this.keys[0]) { // Up
+                ctx.arc(this.x, this.y, PLAYER_RADIUS, (8.5/5) * Math.PI, (6.5/5) * Math.PI);
+            } else if (this.currDir == this.keys[1]) { // Down
+                ctx.arc(this.x, this.y, PLAYER_RADIUS, (3.5/5) * Math.PI, (1.5/5) * Math.PI);
+            } else if (this.currDir == this.keys[2]) { // Left
+                ctx.arc(this.x, this.y, PLAYER_RADIUS, (6/5) * Math.PI, (4/5) * Math.PI);
+            } else if (this.currDir == this.keys[3]) { // Right
+                ctx.arc(this.x, this.y, PLAYER_RADIUS, (1/5) * Math.PI, (9/5) * Math.PI);
+            } else {
+                ctx.arc(this.x, this.y, PLAYER_RADIUS, 0, 2 * Math.PI);
+            }
+            ctx.lineTo(this.x, this.y)
             ctx.fillStyle = color
             ctx.fill()
         }
@@ -29,6 +41,7 @@ function createPlayer(name, color, startPosX, startPosY) {
 
 // Función para agregar al jugador a la sesión del juego (con las teclas de movimiento)
 function addPlayerToGame(player, upKey, downKey, leftKey, rightKey) {
+    player.keys = [upKey, downKey, leftKey, rightKey]
     GAME.startedSession = true
     GAME.players.push(player) // Agregamos al listado de jugadroes
     GAME.draw() // Dibujamos el tablero, los puntos y los jugadores
@@ -248,6 +261,6 @@ let ghost4 = createGhost("hotpink", 41, 15, 'R')
 addPlayerToGame(player1, "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight")
 addPlayerToGame(player2, "KeyW", "KeyS", "KeyA", "KeyD")
 addGhostToGame(ghost1)
-addGhostToGame(ghost2)
-addGhostToGame(ghost3)
-addGhostToGame(ghost4)
+// addGhostToGame(ghost2)
+// addGhostToGame(ghost3)
+// addGhostToGame(ghost4)
