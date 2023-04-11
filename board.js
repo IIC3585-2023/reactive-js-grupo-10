@@ -1,6 +1,24 @@
 const board = document.getElementById("pacman-board");
 
-let grid = [
+// Creamos sesión del juego
+const GAME = {
+    players: [],
+    ghosts: [],
+    draw: function() {
+        drawBoard()
+        drawDots()
+        this.players.forEach((player) => player.draw())
+        this.ghosts.forEach((ghost) => ghost.draw())
+    },
+    directions: ['U', 'D', 'L', 'R'],
+    grid: [],
+    walls: [],
+    dots: [],
+    intersections: [],
+    startedSession: false,
+}
+
+const grid1 = [
     ["■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■"],
     ["■"," "," "," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," "," "," ","■"],
     ["■"," "," "," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," "," "," ","■"],
@@ -35,25 +53,49 @@ let grid = [
     ["■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■"],
 ]
 
+const grid2 = [
+    ["■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■"],
+    ["■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"],
+    ["■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"],
+    ["■"," "," ","■","■","■","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■","■","■","■"," "," ","■"],
+    ["■"," "," ","■","■","■","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■","■","■","■"," "," ","■"],
+    ["■"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","■"],
+    ["■"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","■"],
+    ["■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■"],
+    ["■"," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," ","■"],
+    ["■"," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," ","■"," "," ","■"],
+    ["■"," "," ","■"," "," ","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■","■","■","■","■","■","■"," "," ","■"," "," ","■"," "," ","■"," "," ","■"],
+    ["■"," "," ","■"," "," ","■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"," "," ","■"," "," ","■"],
+    ["■"," "," ","■"," "," ","■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"," "," ","■"," "," ","■"],
+    ["■"," "," ","■"," "," ","■"," "," ","■","■","■","■"," "," ","■"," "," ","■","■"," "," "," ","■","■"," "," ","■"," "," ","■","■","■","■"," "," ","■"," "," ","■"," "," ","■"],
+    ["■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," ","■"," "," ","■"],
+    ["■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," ","■"," "," "," "," "," "," "," "," ","■"," "," "," "," "," ","■"," "," ","■"],
+    ["■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■"],
+]
+
+// GAME.grid = grid1
+// GAME.grid = grid2
+
 const CELL_SIZE = 20
 const DOT_RADIUS = CELL_SIZE * 0.1
 const PLAYER_RADIUS = CELL_SIZE * 0.75
 const GHOST_RADIUS = PLAYER_RADIUS
+const MOVEMENT = CELL_SIZE/2
+const PLAYER_INTERVAL_LENGTH = 75
+const GHOST_INTERVAL_LENGTH = PLAYER_INTERVAL_LENGTH/2
 
-board.width = CELL_SIZE * grid[0].length
-board.height = CELL_SIZE * grid.length
+// board.width = CELL_SIZE * GAME.grid[0].length
+// board.height = CELL_SIZE * GAME.grid.length
 
 const ctx = board.getContext("2d")
 
-let walls = []
-
 function drawBoard() {
-    for(let row = 0; row < grid.length; row++) {
-        for(let col = 0; col < grid[0].length; col++) {
-            if (grid[row][col] == " ") {
+    for(let row = 0; row < GAME.grid.length; row++) {
+        for(let col = 0; col < GAME.grid[0].length; col++) {
+            if (GAME.grid[row][col] == " ") {
                 ctx.fillStyle = "#000000"
             } else {
-                walls.push([col, row])
+                GAME.walls.push([col, row])
                 ctx.fillStyle = "#0000A6"
             }
             ctx.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -61,53 +103,58 @@ function drawBoard() {
     }
 }
 
-let dots = []
+
+//////////////////////////////
 
 // los caminos son de dos bloques, ponemos el dot en medio de 4 bloques
-for(let row = 1; row < grid.length; row++) {
-    for(let col = 1; col < grid[0].length; col++) {
+function createDots(){
+    for(let row = 1; row < GAME.grid.length; row++) {
+        for(let col = 1; col < GAME.grid[0].length; col++) {
 
-        let cellUpLeft = grid[row-1][col-1] == " "
-        let cellLeft = grid[row][col-1] == " "
-        let cellRight = grid[row-1][col] == " "
-        let currCell = grid[row][col] == " "
+            let cellUpLeft = GAME.grid[row-1][col-1] == " "
+            let cellLeft = GAME.grid[row][col-1] == " "
+            let cellRight = GAME.grid[row-1][col] == " "
+            let currCell = GAME.grid[row][col] == " "
 
-        if (cellUpLeft && cellLeft && cellRight && currCell) {
-            dots.push([col, row])
+            if (cellUpLeft && cellLeft && cellRight && currCell) {
+                GAME.dots.push([col, row])
+            }
         }
     }
 }
 
-let intersections = []
+//////////////////////////////
 
 // interseccion de caminos, logica fantasmas
-dots.forEach(dot => {
-    let dotCol = dot[0]
-    let dotRow = dot[1]
+function createIntersections(){
+    GAME.dots.forEach(dot => {
+        let dotCol = dot[0]
+        let dotRow = dot[1]
 
-    let isDotUp = dots.some(d => (d[0] == dotCol) && (d[1] == dotRow-1))
-    let isDotDown = dots.some(d => (d[0] == dotCol) && (d[1] == dotRow+1))
-    let isDotLeft = dots.some(d => (d[0] == dotCol-1) && (d[1] == dotRow))
-    let isDotRight = dots.some(d => (d[0] == dotCol+1) && (d[1] == dotRow))
+        let isDotUp = GAME.dots.some(d => (d[0] == dotCol) && (d[1] == dotRow-1))
+        let isDotDown = GAME.dots.some(d => (d[0] == dotCol) && (d[1] == dotRow+1))
+        let isDotLeft = GAME.dots.some(d => (d[0] == dotCol-1) && (d[1] == dotRow))
+        let isDotRight = GAME.dots.some(d => (d[0] == dotCol+1) && (d[1] == dotRow))
 
-    let andUL = isDotUp && isDotLeft
-    let andUR = isDotUp && isDotRight
-    let andLD = isDotLeft && isDotDown
-    let andRD = isDotRight && isDotDown
+        let andUL = isDotUp && isDotLeft
+        let andUR = isDotUp && isDotRight
+        let andLD = isDotLeft && isDotDown
+        let andRD = isDotRight && isDotDown
 
-    if (andUL || andUR || andLD || andRD){
-        intersections.push([dotCol, dotRow])
-    }
-    // Caminos sin salida
-    if ((isDotUp + isDotDown + isDotLeft + isDotRight) == 1) {
-        intersections.push([dotCol, dotRow])
-    }
-})
+        if (andUL || andUR || andLD || andRD){
+            GAME.intersections.push([dotCol, dotRow])
+        }
+        // Caminos sin salida
+        if ((isDotUp + isDotDown + isDotLeft + isDotRight) == 1) {
+            GAME.intersections.push([dotCol, dotRow])
+        }
+    })
+}
 
 function drawDots() {
     // ctx.fillStyle = '#00a308' //#964b4b
-    for(let i = 0; i < dots.length; i++) {
-        let dot = dots[i]
+    for(let i = 0; i < GAME.dots.length; i++) {
+        let dot = GAME.dots[i]
         let dotCenterX = dot[0] * CELL_SIZE
         let dotCenterY = dot[1] * CELL_SIZE
         ctx.beginPath();
@@ -117,38 +164,42 @@ function drawDots() {
     }
 }
 
-// pacman vs muralla
-// Basado en https://stackoverflow.com/a/16012490
-function rectanglesIntersect(minAx, minAy, minBx, minBy) {
-    let maxAx = minAx + 1 // Pared (cantidad de celdas = 1)
-    let maxAy = minAy + 1 // Pared
-    let maxBx = minBx + 2 // Jugador (cantidad de celdas = 2)
-    let maxBy = minBy + 2 // Jugador
-    let aLeftOfB = maxAx <= minBx;
-    let aRightOfB = minAx >= maxBx;
-    let aAboveB = minAy >= maxBy;
-    let aBelowB = maxAy <= minBy;
+// // pacman vs muralla
+// // Basado en https://stackoverflow.com/a/16012490
+// function rectanglesIntersect(minAx, minAy, minBx, minBy) {
+//     let maxAx = minAx + 1 // Pared (cantidad de celdas = 1)
+//     let maxAy = minAy + 1 // Pared
+//     let maxBx = minBx + 2 // Jugador (cantidad de celdas = 2)
+//     let maxBy = minBy + 2 // Jugador
+//     let aLeftOfB = maxAx <= minBx;
+//     let aRightOfB = minAx >= maxBx;
+//     let aAboveB = minAy >= maxBy;
+//     let aBelowB = maxAy <= minBy;
 
-    return !( aLeftOfB || aRightOfB || aAboveB || aBelowB );
-}
+//     return !( aLeftOfB || aRightOfB || aAboveB || aBelowB );
+// }
 
+// Función que recibe posición en la siguiente unidad de tiempo y revisa si colisionará con una muralla
 function checkNoCollision(x, y) {
     let playerCol = (x / CELL_SIZE) - 1
     let playerRow = (y / CELL_SIZE) - 1
-    return !walls.find(wall => {
-        let wallCol = wall[0]
-        let wallRow = wall[1]
-        return rectanglesIntersect(wallCol, wallRow, playerCol, playerRow)
-    })
-    // for(let i = 0; i < walls.length; i++){
-    //     let wall = walls[i]
+    const playerColFloor = Math.floor(playerCol)
+    const playerRowFloor = Math.floor(playerRow)
+    const playerColCeil = Math.ceil(playerCol)
+    const playerRowCeil = Math.ceil(playerRow)
+    // Math.floor()
+    // Math.ceil()
+    return !(GAME.grid[playerRowFloor][playerColFloor] == "■" || GAME.grid[playerRowFloor][playerColFloor + 1] == "■" || 
+        GAME.grid[playerRowFloor + 1][playerColFloor] == "■" || GAME.grid[playerRowFloor + 1][playerColFloor + 1] == "■" ||
+        GAME.grid[playerRowCeil][playerColCeil] == "■" || GAME.grid[playerRowCeil][playerColCeil + 1] == "■" || 
+        GAME.grid[playerRowCeil + 1][playerColCeil] == "■" || GAME.grid[playerRowCeil + 1][playerColCeil + 1] == "■"
+    )
+    
+    // return !GAME.walls.find(wall => {
     //     let wallCol = wall[0]
     //     let wallRow = wall[1]
-    //     if (rectanglesIntersect(wallCol, wallRow, playerCol, playerRow)){
-    //         return false
-    //     }
-    // }
-    // return true
+    //     return rectanglesIntersect(wallCol, wallRow, playerCol, playerRow)
+    // })
 }
 
 // Basado en https://stackoverflow.com/a/68841877
@@ -157,11 +208,11 @@ function circlesIntersect(dotX, dotY, playerX, playerY) {
 }
 
 function checkDotCollection(x, y) {
-    dots.forEach(dot => {
+    GAME.dots.forEach(dot => {
         let dotX = dot[0] * CELL_SIZE
         let dotY = dot[1] * CELL_SIZE
         if (circlesIntersect(dotX, dotY, x, y)){
-            dots = dots.filter(item => item !== dot)
+            GAME.dots = GAME.dots.filter(item => item !== dot)
             drawDots()
         }
     })
@@ -170,7 +221,7 @@ function checkDotCollection(x, y) {
 function checkIntersection(x, y) {
     let ghostCol = x / CELL_SIZE
     let ghostRow = y / CELL_SIZE
-    return intersections.some(i => (i[0] == ghostCol) && (i[1] == ghostRow))
+    return GAME.intersections.some(i => (i[0] == ghostCol) && (i[1] == ghostRow))
 }
 
 function checkCollisionPlayerGhosts(playerX, playerY, ghostX, ghostY) {
