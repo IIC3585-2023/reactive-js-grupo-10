@@ -139,7 +139,9 @@ function addGhostToGame(ghost) {
             // Si fantasma se encuentra en un cruce/intersección de caminos, cambiamos de dirección al azar
             map(_ => {
                 if (checkIntersection(ghost.x, ghost.y)) {
-                    return GAME.directions[Math.floor(Math.random() * GAME.directions.length)]
+                    return GAME.directions[
+                        Math.floor(Math.random() * GAME.directions.length)
+                    ]
                 }
                 return ghost.direction
             }),
@@ -179,6 +181,7 @@ function addGhostToGame(ghost) {
         .subscribe()
 }
 
+// Función para iniciar el juego (se llama una sola vez)
 function startSession(grid){
     GAME.grid = grid
     board.width = CELL_SIZE * GAME.grid[0].length

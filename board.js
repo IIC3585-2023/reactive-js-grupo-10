@@ -73,9 +73,6 @@ const grid2 = [
     ["■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■","■"],
 ]
 
-// GAME.grid = grid1
-// GAME.grid = grid2
-
 const CELL_SIZE = 20
 const DOT_RADIUS = CELL_SIZE * 0.1
 const PLAYER_RADIUS = CELL_SIZE * 0.75
@@ -84,11 +81,9 @@ const MOVEMENT = CELL_SIZE/2
 const PLAYER_INTERVAL_LENGTH = 75
 const GHOST_INTERVAL_LENGTH = PLAYER_INTERVAL_LENGTH/2
 
-// board.width = CELL_SIZE * GAME.grid[0].length
-// board.height = CELL_SIZE * GAME.grid.length
-
 const ctx = board.getContext("2d")
 
+// Función que dibuja el tablero, con todos sus caminos y paredes
 function drawBoard() {
     for(let row = 0; row < GAME.grid.length; row++) {
         for(let col = 0; col < GAME.grid[0].length; col++) {
@@ -103,10 +98,7 @@ function drawBoard() {
     }
 }
 
-
-//////////////////////////////
-
-// los caminos son de dos bloques, ponemos el dot en medio de 4 bloques
+// Función que determina la posición de cada punto
 function createDots(){
     for(let row = 1; row < GAME.grid.length; row++) {
         for(let col = 1; col < GAME.grid[0].length; col++) {
@@ -123,9 +115,7 @@ function createDots(){
     }
 }
 
-//////////////////////////////
-
-// interseccion de caminos, logica fantasmas
+// Función que determina los cruces/intersecciones de caminos del tablero
 function createIntersections(){
     GAME.dots.forEach(dot => {
         let dotCol = dot[0]
@@ -151,8 +141,8 @@ function createIntersections(){
     })
 }
 
+// Función que dibuja los puntos no recolectados en el tablero
 function drawDots() {
-    // ctx.fillStyle = '#00a308' //#964b4b
     for(let i = 0; i < GAME.dots.length; i++) {
         let dot = GAME.dots[i]
         let dotCenterX = dot[0] * CELL_SIZE
@@ -163,21 +153,6 @@ function drawDots() {
         ctx.fill()
     }
 }
-
-// // pacman vs muralla
-// // Basado en https://stackoverflow.com/a/16012490
-// function rectanglesIntersect(minAx, minAy, minBx, minBy) {
-//     let maxAx = minAx + 1 // Pared (cantidad de celdas = 1)
-//     let maxAy = minAy + 1 // Pared
-//     let maxBx = minBx + 2 // Jugador (cantidad de celdas = 2)
-//     let maxBy = minBy + 2 // Jugador
-//     let aLeftOfB = maxAx <= minBx;
-//     let aRightOfB = minAx >= maxBx;
-//     let aAboveB = minAy >= maxBy;
-//     let aBelowB = maxAy <= minBy;
-
-//     return !( aLeftOfB || aRightOfB || aAboveB || aBelowB );
-// }
 
 // Función que recibe posición en la siguiente unidad de tiempo y revisa si colisionará con una muralla
 function checkNoCollision(x, y) {
@@ -191,19 +166,11 @@ function checkNoCollision(x, y) {
     if (playerColFloor !== playerColCeil && playerRowFloor !== playerRowCeil) {
         corners = GAME.grid[playerRowFloor+2][playerColFloor] == "■" || GAME.grid[playerRowFloor][playerColFloor+2] == "■"
     }
-    // Math.floor()
-    // Math.ceil()
     return !(GAME.grid[playerRowFloor][playerColFloor] == "■" || GAME.grid[playerRowFloor][playerColFloor + 1] == "■" || 
         GAME.grid[playerRowFloor + 1][playerColFloor] == "■" || GAME.grid[playerRowFloor + 1][playerColFloor + 1] == "■" ||
         GAME.grid[playerRowCeil][playerColCeil] == "■" || GAME.grid[playerRowCeil][playerColCeil + 1] == "■" || 
         GAME.grid[playerRowCeil + 1][playerColCeil] == "■" || GAME.grid[playerRowCeil + 1][playerColCeil + 1] == "■" || corners
     )
-    
-    // return !GAME.walls.find(wall => {
-    //     let wallCol = wall[0]
-    //     let wallRow = wall[1]
-    //     return rectanglesIntersect(wallCol, wallRow, playerCol, playerRow)
-    // })
 }
 
 // Basado en https://stackoverflow.com/a/68841877
@@ -211,6 +178,7 @@ function circlesIntersect(dotX, dotY, playerX, playerY) {
     return Math.hypot(dotX-playerX, dotY-playerY) <= DOT_RADIUS + PLAYER_RADIUS
 }
 
+// Función que verifica si jugador se intersecta con algún punto, y de ser así, lo recolecta
 function checkDotCollection(x, y) {
     GAME.dots.forEach(dot => {
         let dotX = dot[0] * CELL_SIZE
@@ -222,12 +190,14 @@ function checkDotCollection(x, y) {
     })
 }
 
+// Función que verifica si un fantasma se encuentra en un cruce/intersección de caminos
 function checkIntersection(x, y) {
     let ghostCol = x / CELL_SIZE
     let ghostRow = y / CELL_SIZE
     return GAME.intersections.some(i => (i[0] == ghostCol) && (i[1] == ghostRow))
 }
 
+// Función que verifica si un jugador se intersecta con un fantasma
 function checkCollisionPlayerGhosts(playerX, playerY, ghostX, ghostY) {
     return Math.hypot(ghostX-playerX, ghostY-playerY) <= GHOST_RADIUS/2 + PLAYER_RADIUS/2
 }
